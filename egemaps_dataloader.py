@@ -14,13 +14,18 @@ class egemaps_dataset(Dataset):
 
     def __init__(self, pkpath, on_cuda):
 
-        self.on_cuda = on_cuda
-
         with open(pkpath, 'rb') as f:
-            self.dataset = to_cu(on_cuda, torch.FloatTensor(pk.load(f))) # (samples x dimension)
+            # (samples x dimension)
+            datamat = pk.load(f)
+
+            self.targets = Variable(to_cu(on_cuda, 
+                    torch.LongTensor(np.round(datamat[:,0])))).view(-1)
+
+            self.inputs = Variable(to_cu(on_cuda, 
+                    torch.FloatTensor(datamat[:,1:])))
 
     def __len__(self):
         return np.shape(dataset)[0]
 
     def __getitem__(self, idx):
-        return self.dataset[i,:]
+        return (self.inputs, self.targets)

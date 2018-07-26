@@ -410,7 +410,7 @@ class Trainer():
 #                print('fc1.weight:',self.network.fc1.weight)
                 # print('fc4.weight:',self.network.fc4.weight)
                 # print('forwarded:',forwarded)
-            
+           
                 self.network.eval()
                 
             valid_loss, valid_uar = validate(
