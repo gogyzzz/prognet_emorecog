@@ -1,15 +1,4 @@
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.autograd import Variable
-import pickle as pk
-import numpy as np
-import os
-import json as js
-
-############################################################
-#https://pytorch.org/docs/stable/notes/cuda.html#device-agnostic-code
-############################################################
-
+##### prognet.py
 
 def init_linear(m):
     if type(m) == nn.Linear:
@@ -17,20 +6,12 @@ def init_linear(m):
         nn.init.constant(m.bias, 0)
 
 class dnn(nn.Module):
-    def __init__(self, 
-            ninput, nhid, nout, on_cuda):
+    def __init__(self):
         super(dnn, self).__init__()
 
-        self.on_cuda = on_cuda
-
-        self.ninput = ninput
-        self.nhid = nhid
-        self.nout
-                
-        self.nodes = ninput
         #self.bn0 = nn.BatchNorm1d(ninput)
 
-        self.fc1 = nn.Linear(ninput, nhid)
+        self.fc1 = nn.Linear(nin, nhid)
         #self.bn1 = nn.BatchNorm1d(nhid)
 
         self.fc2 = nn.Linear(nhid, nhid)
@@ -42,7 +23,7 @@ class dnn(nn.Module):
         self.fc4 = nn.Linear(nhid, nhid)
         #self.bn4 = nn.BatchNorm1d(nhid)
 
-        self.fc_out = nn.Linear(nhid, nout)
+        self.fc_out = nn.Linear(nhid, dnn_nout)
 
     def forward(self, x):
 
@@ -56,19 +37,13 @@ class dnn(nn.Module):
 
 class prognet(nn.Module):
 
-    def __init__(self, pretrained, 
-	ninput, nhid, nout, on_cuda):
+    def __init__(self, pretrained): 
 
-        # if model exists, load, message, exit
-
-        # else, load premodel, init weight, etc.
         super(prognet, self).__init__()
 
-        self.basicdnn_state_dict = dnn_state_dict
+        self.pretrained
 
-        self.on_cuda = on_cuda
-
-        self.fc1_w = nn.Linear(ninput, nhid)
+        self.fc1_w = nn.Linear(nin, nhid)
         #self.bn1 = nn.BatchNorm1d(nhid) # unused
 
         self.fc2_w = nn.Linear(nhid, nhid)
@@ -83,11 +58,10 @@ class prognet(nn.Module):
         self.fc4_u = nn.Linear(nhid, nhid)
         #self.bn4 = nn.BatchNorm1d(nhid)
 
-        self.fc_out_w = nn.Linear(nhid, nout)
-        self.fc_out_u = nn.Linear(nhid, nout) 
+        self.fc_out_w = nn.Linear(nhid, prognet_nout)
+        self.fc_out_u = nn.Linear(nhid, prognet_nout) 
 
     def forward(self, x):
-
     
         fzly1 = Variable(F.sigmoid(self.pretrained.fc1(x)), 
                 requires_grad=False)
@@ -97,7 +71,6 @@ class prognet(nn.Module):
                 requires_grad=False)
         fzly4 = Variable(F.sigmoid(self.pretrained.fc4(fzly3)), 
                 requires_grad=False)
-
 
         ly1 = F.sigmoid(self.fc1_w(x))
 
