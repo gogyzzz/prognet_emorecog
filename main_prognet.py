@@ -6,7 +6,8 @@ from egemaps_dataset import egemaps_dataset
 # arg parsing
 
 expcase = sys.argv[1]
-on_cuda = sys.argv[2]
+#on_cuda = sys.argv[2]
+on_cuda = True
 
 #read %s/param.json
 import json
@@ -66,10 +67,10 @@ torch.save(pretrained, param['premodel'])
 
 # training
 
-dnn_state_dic = torch.load(param['premodel'])
+pretrained = torch.load_state_dict(torch.load(param['premodel']))
 
 nout = 4
-prognet_mdl = prognet(dnn_state_dic, nin, nhid, nout, on_cuda)
+prognet_mdl = prognet(pretrained, nin, nhid, nout, on_cuda)
 optim = torch.optim.Adam(prognet_mdl.parameters(), lr=0.00005)
 
 weight = [1.0, 1.0] 
