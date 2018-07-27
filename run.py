@@ -26,12 +26,12 @@ def to_cu(is_cuda, tensor):
 class EgemapsDataset(Dataset):
     """DB Dataset."""
     
-    def __init__(self, hdf_path, id_feat_dic_path, is_cuda):
+    def __init__(self, df, id_feat_dic_path, is_cuda):
 
         self.is_cuda = is_cuda
 
         # available label : speaker, gender, cat
-        self.df = pd.read_hdf(hdf_path,'table')
+        self.df = df
 
         self.id_feat_dic = pk.load(open(id_feat_dic_path,'rb'))
 
@@ -108,10 +108,10 @@ import torch.nn.functional as F
 
 class BasicDNN(nn.Module):
 
-    def __init__(self, num_speakers, mode, is_cuda):
+    def __init__(self, n_labels, mode, is_cuda):
         super(BasicDNN, self).__init__()
 
-        self.num_speakers = num_speakers
+        self.n_lables = n_labels
         self.mode = mode # mode can be speaker, gender or cat
         self.is_cuda = is_cuda
 
@@ -119,26 +119,35 @@ class BasicDNN(nn.Module):
 
         self.fc1 = nn.Linear(88, 256)
         self.bn1 = nn.BatchNorm1d(256)
+        self.do1 = nn.Dropout()
         
 
         self.fc2 = nn.Linear(256, 256)
         self.bn2 = nn.BatchNorm1d(256)
+        self.do2 = nn.Dropout()
         
         self.fc3 = nn.Linear(256, 256)
         self.bn3 = nn.BatchNorm1d(256)
+        self.do3 = nn.Dropout()
 
         self.fc4 = nn.Linear(256, 256)
         self.bn4 = nn.BatchNorm1d(256)
+        self.do4 = nn.Dropout()
 
+        self.fc5 = nn.Linear(256, n_labels)
         # Three different targets
-        self.fc_speaker = nn.Linear(256, num_speakers)
-        self.bn_speaker = nn.BatchNorm1d(num_speakers)
+        #self.fc_speaker = nn.Linear(256, n_labels)
+        #self.bn_speaker = nn.BatchNorm1d(n_labels)
+        #self.do_speaker = nn.Dropout()
 
-        self.fc_gender = nn.Linear(256, 2)
-        self.bn_gender = nn.BatchNorm1d(2)
+        #self.fc_gender = nn.Linear(256, n2)
+        #self.bn_gender = nn.BatchNorm1d(2)
+        #self.do_gender = nn.Dropout()
 
-        self.fc_cat = nn.Linear(256, 4)
-        self.bn_cat = nn.BatchNorm1d(4)
+        #self.fc_cat = nn.Linear(256, 4)
+        #self.bn_cat = nn.BatchNorm1d(4)
+        self.do_cat = nn.Dropout()
+        
 
         if self.is_cuda is True:
             self.cuda()
@@ -156,44 +165,47 @@ class BasicDNN(nn.Module):
         mode can be speaker, gender and cat
         """
 
-        #x = F.sigmoid(self.bn1(self.fc1(x)))
-        #x = F.sigmoid(self.bn2(self.fc2(x)))
-        #x = F.sigmoid(self.bn3(self.fc3(x)))
-        #x = F.sigmoid(self.bn4(self.fc4(x)))
+        #x = F.relu(self.bn1(self.fc1(x)))
+        #x = F.relu(self.bn2(self.fc2(x)))
+        #x = F.relu(self.bn3(self.fc3(x)))
+        #x = F.relu(self.bn4(self.fc4(x)))
+        
         #x = self.bn0(x)
-        #x = F.sigmoid(F.dropout(self.fc1(x)))
-        #x = F.sigmoid(F.dropout(self.fc2(x)))
-        #x = F.sigmoid(F.dropout(self.fc3(x)))
-        #x = F.sigmoid(F.dropout(self.fc4(x)))
-        x = F.sigmoid(F.dropout(self.fc1(x)))
-        x = F.sigmoid(F.dropout(self.fc2(x)))
-        x = F.sigmoid(F.dropout(self.fc3(x)))
-        x = F.sigmoid(F.dropout(self.fc4(x)))
+        #x = F.relu(F.dropout(self.fc1(x)))
+        #x = F.relu(F.dropout(self.fc2(x)))
+        #x = F.relu(F.dropout(self.fc3(x)))
+        #x = F.relu(F.dropout(self.fc4(x)))
 
-        if self.mode == 'speaker':
+        x = F.relu(self.do1(self.fc1(x)))
+        x = F.relu(self.do2(self.fc2(x)))
+        x = F.relu(self.do3(self.fc3(x)))
+        x = F.relu(self.do4(self.fc4(x)))
+        return F.softmax(self.fc5(x))
+
+        #if self.mode == 'speaker':
             #x = F.softmax(self.bn_speaker(self.fc_speaker(x)))
             #x = F.softmax(F.dropout(self.bn_speaker(self.fc_speaker(x))))
-            x = F.softmax(F.dropout(self.fc_speaker(x)))
+        #    x = F.softmax((self.fc_speaker(x)))
             #x = self.bn_speaker(self.fc_speaker(x))
-            return x
+        #    return x
 
-        elif self.mode == 'gender':
+        #elif self.mode == 'gender':
             #x = F.softmax(self.bn_gender(self.fc_gender(x)))
             #x = F.softmax(F.dropout(self.bn_gender(self.fc_gender(x))))
-            x = F.softmax(F.dropout(self.fc_gender(x)))
+        #    x = F.softmax((self.fc_gender(x)))
             #x = self.bn_gender(self.fc_gender(x))
-            return x
+        #    return x
 
-        elif self.mode == 'cat':
+        #elif self.mode == 'cat':
             #x = F.softmax(self.bn_cat(fc_cat(x)))
             #x = F.softmax(F.dropout(self.bn_cat(fc_cat(x))))
-            x = F.softmax(F.dropout(self.fc_cat(x)))
+        #    x = F.softmax((self.fc_cat(x)))
             #x = self.bn_cat(fc_cat(x))
-            return x
+        #    return x
 
-        else:
-            print(' >> caution << : unvalid mode')
-            return x
+        #else:
+        #    print(' >> caution << : unvalid mode')
+        #    return x
 
 
 class ProgNet(nn.Module):
@@ -211,31 +223,38 @@ class ProgNet(nn.Module):
 
         self.fc1_w = nn.Linear(88, 256)
         self.bn1 = nn.BatchNorm1d(256)
+        self.do1 = nn.Dropout()
 
         self.fc2_w = nn.Linear(256, 256)
         self.fc2_u = nn.Linear(256, 256)
         self.bn2 = nn.BatchNorm1d(256)
+        self.do2 = nn.Dropout()
         
         self.fc3_w = nn.Linear(256, 256)
         self.fc3_u = nn.Linear(256, 256)
         self.bn3 = nn.BatchNorm1d(256)
+        self.do3 = nn.Dropout()
 
         self.fc4_w = nn.Linear(256, 256)
         self.fc4_u = nn.Linear(256, 256)
         self.bn4 = nn.BatchNorm1d(256)
+        self.do4 = nn.Dropout()
 
         # Three different targets
         self.fc_speaker_w = nn.Linear(256, num_classes)
         self.fc_speaker_u = nn.Linear(256, num_classes)
         self.bn_speaker = nn.BatchNorm1d(num_classes)
+        self.do_speaker = nn.Dropout()
 
         self.fc_gender_w = nn.Linear(256, 2)
         self.fc_gender_u = nn.Linear(256, 2)
         self.bn_gender = nn.BatchNorm1d(2)
+        self.do_gender = nn.Dropout()
 
-        self.fc_cat_w = nn.Linear(256, 4)
-        self.fc_cat_u = nn.Linear(256, 4)
-        self.bn_cat = nn.BatchNorm1d(4)
+        self.fc_cat_w = nn.Linear(256, num_classes)
+        self.fc_cat_u = nn.Linear(256, num_classes)
+        self.bn_cat = nn.BatchNorm1d(num_classes)
+        self.do_cat = nn.Dropout()
 
         if self.is_cuda is True:
             self.cuda()
@@ -268,10 +287,15 @@ class ProgNet(nn.Module):
         fz_fcw4.requires_grad = False
         fz_fcb4.requires_grad = False
 
-        fzly1 = F.sigmoid(F.linear(x, fz_fcw1, fz_fcb1))
-        fzly2 = F.sigmoid(F.linear(fzly1, fz_fcw2, fz_fcb2))
-        fzly3 = F.sigmoid(F.linear(fzly2, fz_fcw3, fz_fcb3))
-        fzly4 = F.sigmoid(F.linear(fzly3, fz_fcw4, fz_fcb4))
+        #fzly1 = F.relu(F.linear(x, fz_fcw1, fz_fcb1))
+        #fzly2 = F.relu(F.linear(fzly1, fz_fcw2, fz_fcb2))
+        #fzly3 = F.relu(F.linear(fzly2, fz_fcw3, fz_fcb3))
+        #fzly4 = F.relu(F.linear(fzly3, fz_fcw4, fz_fcb4))
+        
+        fzly1 = F.relu((F.linear(x, fz_fcw1, fz_fcb1)))
+        fzly2 = F.relu((F.linear(fzly1, fz_fcw2, fz_fcb2)))
+        fzly3 = F.relu((F.linear(fzly2, fz_fcw3, fz_fcb3)))
+        fzly4 = F.relu((F.linear(fzly3, fz_fcw4, fz_fcb4)))
 
         return fzly1, fzly2, fzly3, fzly4
 
@@ -282,25 +306,32 @@ class ProgNet(nn.Module):
 
         fzly1, fzly2, fzly3, fzly4 = self.get_layers(x)
 
-        ly1 = F.sigmoid(F.dropout(self.fc1_w(x)))
-        ly2 = F.sigmoid(F.dropout(self.fc2_w(ly1)) + F.dropout(self.fc2_u(fzly1)))
-        ly3 = F.sigmoid(F.dropout(self.fc3_w(ly2)) + F.dropout(self.fc3_u(fzly2)))
-        ly4 = F.sigmoid(F.dropout(self.fc4_w(ly3)) + F.dropout(self.fc4_u(fzly3)))
+        ly1 = F.relu(self.do1(self.fc1_w(x)))
+        ly2 = F.relu(self.do2(self.fc2_w(ly1) + self.fc2_u(fzly1)))
+        ly3 = F.relu(self.do3(self.fc3_w(ly2) + self.fc3_u(fzly2)))
+        ly4 = F.relu(self.do4(self.fc4_w(ly3) + self.fc4_u(fzly3)))
+        #print(self.training)
+        #if self.training == True:
+            #print('training = True')
+            #print(ly4.data[0:2,0:2].cpu())
+        #else:
+        #    print('training = False')
+        #    print(ly4.data[0:2,0:2].cpu())
 
         if self.mode == 'speaker':
             return F.softmax(
-                    F.dropout(self.fc_speaker_w(ly4))
-                    + F.dropout(self.fc_speaker_u(fzly4)))
+                    (self.fc_speaker_w(ly4)
+                    + self.fc_speaker_u(fzly4)))
 
         elif self.mode == 'gender':
             return F.softmax(
-                    F.dropout(self.fc_gender_w(ly4))
-                    + F.dropout(self.fc_gender_u(fzly4)))
+                    (self.fc_gender_w(ly4)
+                    + self.fc_gender_u(fzly4)))
 
         elif self.mode == 'cat':
-            return F.softmax(
-                    F.dropout(self.fc_cat_w(ly4))
-                    + F.dropout(self.fc_cat_u(fzly4)))
+             return F.softmax(
+                    (self.fc_cat_w(ly4)
+                    + self.fc_cat_u(fzly4)))
 
         else:
             print(' >> caution << : unvalid mode')
@@ -330,6 +361,11 @@ def validate(validset, network, criterion, mode):
         x_input = Variable(batch['egemaps'])
         y_true = Variable(batch[mode]).view(-1)
 
+        #print('before eval:',network.training)
+        #network.eval()
+        #print('after eval:',network.training)
+
+
         output = network(x_input)
         loss = criterion(output, y_true)
 #        print(output.max(1))
@@ -352,13 +388,15 @@ def validate(validset, network, criterion, mode):
 
 class Trainer():
 
-    def __init__(self, expname, traindataloader, validset, network, mode, st_epoch, ed_epoch, optimizer, criterion, is_cuda):
+    def __init__(self, modelpath, traindataloader, validset, testset, network, mode, st_epoch, ed_epoch, optimizer, criterion, is_cuda):
 
-        self.expname = expname
+        self.modelpath = modelpath
 
         self.traindataloader = traindataloader
 
         self.validset = validset
+
+        self.testset = testset
         
         self.network = network
 
@@ -400,6 +438,7 @@ class Trainer():
                 self.network.train()
 
                 forwarded = self.network.forward(x_inputs)
+                #print('training')
                 train_loss = self.criterion(forwarded, y_labels)
 
                 #print(train_loss.data[0])
@@ -411,19 +450,19 @@ class Trainer():
                 # print('fc4.weight:',self.network.fc4.weight)
                 # print('forwarded:',forwarded)
             
-                self.network.eval()
-                
+                #self.network.train(False)
+
+            self.network.eval()
             valid_loss, valid_uar = validate(
                     self.validset, self.network, 
                     self.criterion, self.mode)
 
             train_log = '[%d, %5d] loss: %.3f'%(epoch, i, train_loss.data[0])
             valid_log = '[%d, %5d] valid_uar: %s'%(epoch, i, str(valid_uar))
-            os.system('echo %s >> %s.log' %(train_log, self.expname))
-            os.system('echo %s >> %s.log' %(valid_log, self.expname))
+            os.system('echo %s >> %s.log' %(train_log, self.modelpath))
+            os.system('echo %s >> %s.log' %(valid_log, self.modelpath))
             print(train_log)
 
-            filename = self.expname + '.pth'
 
             if valid_uar > best_valid_uar:
 
@@ -433,68 +472,89 @@ class Trainer():
                         'train_loss':train_loss,
                         'valid_uar':valid_uar,
                         'optim_state_dict':self.optimizer.state_dict()}
-                # filename = '_'.join([self.expname, str(epoch), '.pth'])
+                # filename = '_'.join([self.modelpath, str(epoch), '.pth'])
 
                 valid_log = '[%d, %5d] best valid_uar: %s'%(epoch, i, str(best_valid_uar))
-                os.system('echo %s >> %s.log' %(valid_log, self.expname))
+                os.system('echo %s >> %s.log' %(valid_log, self.modelpath))
                 print(valid_log)
 
-        torch.save(state, filename)
-        print('save model ' + filename)
-        print('Finished Training')
+        torch.save(state, self.modelpath)
+        print('save model ' + self.modelpath)
+        print('Finished Training')                      
 
-        return filename
+        return self.modelpath
 
+    def test(self):
+        self.network.eval()
+        test_loss, test_uar = validate(
+            self.testset, self.network, 
+            self.criterion, self.mode)
+        
+        test_log = 'test_uar: %s'%(str(test_uar))
+        os.system('echo %s >> %s.log' %(test_log, self.modelpath))
+        print(test_log)
+
+
+import pickle as pk
 def run_exp_case(exp_case):
 
+    #is_cuda = True
     is_cuda = False
 
     exp_case = json.loads(exp_case)
-
-    df = pd.read_hdf(exp_case['db_hdf'],'table')
-
-    if exp_case['db_hdf'] == 'iemocap_4emo.h5':
-        catweight = to_cu(is_cuda, Variable(torch.Tensor(pk.load(open('iemocap_balanced_weights.pk','rb')))))
-    else:
-        catweight = to_cu(is_cuda, Variable(torch.Tensor(pk.load(open('msp_improv_balanced_weights.pk','rb')))))
-                    
-#    catweight = to_cu(is_cuda, Variable(torch.Tensor([
-#                len(df)/len(df.loc[df.loc[:,'cat']=='N']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='S']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='A']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='H'])])))
-
-    egemapsdataset = EgemapsDataset(exp_case['db_hdf'],exp_case['id_feat_dic_pk'], is_cuda)
     
-    trainset = RCVEgemapsDataset(egemapsdataset, exp_case['run_fold_pk'], exp_case['irun'], exp_case['ifold'], 'train')
+    datasets = pk.load(open(exp_case['dataset_pk'],'rb'))
 
-    traindataloader = DataLoader(trainset, batch_size=len(trainset), shuffle=True)
+    #if exp_case['db_hdf'] == 'iemocap_4emo.h5':
+    #    catweight = to_cu(is_cuda, Variable(torch.Tensor(pk.load(open('iemocap_balanced_weights.pk','rb')))))
+    #else:
+    #    catweight = to_cu(is_cuda, Variable(torch.Tensor(pk.load(open('msp_improv_balanced_weights.pk','rb')))))
 
-    validset = RCVEgemapsDataset(egemapsdataset, exp_case['run_fold_pk'], exp_case['irun'], exp_case['ifold'], 'val')
+#    egemapsdataset = EgemapsDataset(exp_case['db_hdf'],exp_case['id_feat_dic_pk'], is_cuda)
+    
+    trainset = EgemapsDataset(datasets['train'], exp_case['id_feat_dic_pk'], is_cuda)
 
-    if exp_case['pre_label'] == 'cat':
-        criterion = nn.CrossEntropyLoss(weight=catweight)
+    traindataloader = DataLoader(trainset, batch_size=exp_case['batch_size'], shuffle=True)
 
-    else:
-        criterion = nn.CrossEntropyLoss()
+    validset = EgemapsDataset(datasets['valid'], exp_case['id_feat_dic_pk'], is_cuda)
 
-    model = BasicDNN(exp_case['n_labels'],exp_case['pre_label'], is_cuda)
+    testset = EgemapsDataset(datasets['test'], exp_case['id_feat_dic_pk'], is_cuda)
 
-    optimizer = torch.optim.Adam(model.parameters())
+    #if exp_case['pre_label'] == 'cat':
+    #    criterion = nn.CrossEntropyLoss(weight=catweight)
 
-    trainer = Trainer(exp_case['premodel_name'],traindataloader, validset, model, exp_case['pre_label'], 0, 300, optimizer, criterion, is_cuda)
+    #else:
+        #criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss()
+
+    model = BasicDNN(exp_case['n_prelabels'],exp_case['pre_label'], is_cuda)
+
+    #optimizer = torch.optim.Adam(model.parameters())
+    #optimizer = torch.optim.SGD(model.parameters(), lr=exp_case['lr'], momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=exp_case['lr'])
+
+    trainer = Trainer(exp_case['best_premodel_path'],traindataloader, validset, testset, model, exp_case['pre_label'], 0, exp_case['n_pre_epochs'], optimizer, criterion, is_cuda)
 
     trainer.training()
+    trainer.test()
 
-    prev_state_dict = torch.load(exp_case['premodel_name'] + '.pth')
+    prev_state_dict = torch.load(exp_case['best_premodel_path'])
 
-    model = ProgNet(prev_state_dict, 4, 'cat', is_cuda)
+    model = ProgNet(prev_state_dict, exp_case['n_classes'], 'cat', is_cuda)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=exp_case['lr'])
+    #optimizer = torch.optim.SGD(model.parameters(), lr=exp_case['lr'], momentum=0.9)
 
-    trainer = Trainer(exp_case['prognet_name'],traindataloader, validset, model, 'cat', 0, 300, optimizer, criterion, is_cuda)
+    traindataloader = DataLoader(trainset, batch_size=exp_case['batch_size'], shuffle=True)
 
+    trainer = Trainer(exp_case['best_prognet_path'],traindataloader, validset, testset, model, 'cat', 0, exp_case['n_epochs'], optimizer, criterion, is_cuda)
+
+    print('--- Training Progressive neural network ---')
     trainer.training()
+
+    trainer.test()
+
+
 
 import json
 import sys

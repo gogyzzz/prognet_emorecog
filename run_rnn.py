@@ -16,33 +16,17 @@ from utils import init_weights
 
 class EmoLLDDataset(Dataset):
 
-    def __init__(self, pk_path, ifold, mode, catweight, is_cuda):
-
-        self.ifold = ifold
+    def __init__(self, df, catwgt, is_cuda):
 
         self.is_cuda = is_cuda
 
-        df_table = pickle.load(open(pk_path, 'rb'))
+        self.df = df 
+        
+        cat_list = list(set(self.df.loc[:,'cat']))
 
-        self.cat2dec = {'N':0, 'S':1, 'A':2, 'H':3}
+        self.cat2dec = {cat:i for i, cat in enumerate(cat_list)}
 
-        self.catweight = catweight
-
-        if mode == 'train':
-
-            self.df = df_table[ifold][0]
-
-        elif mode == 'test':
-
-            self.df = df_table[ifold][1]
-
-        elif mode == 'valid':
-
-            self.df = df_table[ifold][2]
-
-        else:
-
-            print('error in mode in EmoLLDDataset')
+        self.catwgt = catwgt
 
     def __len__(self):
 
@@ -50,14 +34,10 @@ class EmoLLDDataset(Dataset):
 
     def __getitem__(self, idx):
 
-#        return {
-#                'lld':to_cu(self.is_cuda,torch.FloatTensor(pickle.load(open(df.iloc[idx]['lldpkpath'],'rb')))),
-#                'cat':to_cu(self.is_cuda,torch.LongTensor([self.cat2dec[df.iloc[idx]['cat']]]))}
-        return to_cu(self.is_cuda,torch.FloatTensor(pickle.load(open(self.df.iloc[idx]['lldpkpath'],'rb')))), to_cu(self.is_cuda,torch.LongTensor([self.cat2dec[self.df.iloc[idx]['cat']]])), to_cu(self.is_cuda,torch.FloatTensor([self.catweight[self.cat2dec[self.df.iloc[idx]['cat']]]]))
+        return to_cu(self.is_cuda,torch.FloatTensor(pickle.load(open(self.df.iloc[idx]['lldpkpath'],'rb')))), to_cu(self.is_cuda,torch.LongTensor([self.cat2dec[self.df.iloc[idx]['cat']]])), to_cu(self.is_cuda,torch.FloatTensor([self.catwgt[self.cat2dec[self.df.iloc[idx]['cat']]]]))
 
 def partial_collate_fn(data, is_cuda):
 
-#    print(data)
     data.sort(key=lambda x: np.shape(x[0])[0], reverse=True)
     llds, cats, score_weights = zip(*data)
 #    print(llds)
@@ -99,16 +79,18 @@ from torch.nn.utils.rnn import pad_packed_sequence
 
 class local_att_rnn(nn.Module):
 
-    def __init__(self, is_cuda):
+    def __init__(self, n_labels, is_cuda):
         super(local_att_rnn, self).__init__()
 
         self.is_cuda = is_cuda
 
         self.fc1 = nn.Linear(32, 512)
         #self.fc1 = nn.Linear(32, 256)
+        self.do1 = nn.Dropout(p=0.2)
 
         self.fc2 = nn.Linear(512, 512)
         #self.fc2 = nn.Linear(256, 256)
+        self.do2 = nn.Dropout()
 
         #self.blstm = torch.nn.LSTM(256, 64, 1, 
         self.blstm = torch.nn.LSTM(512, 128, 1, 
@@ -121,7 +103,7 @@ class local_att_rnn(nn.Module):
         self.u = to_cu(is_cuda, Variable(torch.zeros((256,))))
 
         #self.fc3 = nn.Linear(128, 4)
-        self.fc3 = nn.Linear(256, 4)
+        self.fc3 = nn.Linear(256, n_labels)
 
         if self.is_cuda is True:
             self.cuda()
@@ -138,9 +120,9 @@ class local_att_rnn(nn.Module):
 
         #print('indep_feats:',indep_feats.size())
 
-        indep_feats = F.relu(F.dropout(self.fc1(indep_feats)))
+        indep_feats = F.relu(self.do1(self.fc1(indep_feats)))
 
-        indep_feats = F.relu(F.dropout(self.fc2(indep_feats)))
+        indep_feats = F.relu(self.do2(self.fc2(indep_feats)))
 
         batched_feats = indep_feats.view(batch_size, -1, 512)
         #batched_feats = indep_feats.view(batch_size, -1, 256)
@@ -173,7 +155,7 @@ class local_att_rnn(nn.Module):
 
         #print('torch.cumsum:',torch.sum(torch.matmul(alpha, padded), dim=1))
 
-        return F.softmax(F.dropout(self.fc3(torch.sum(torch.matmul(alpha, padded), dim=1))))
+        return F.softmax((self.fc3(torch.sum(torch.matmul(alpha, padded), dim=1))))
 
 
 import torch
@@ -188,6 +170,9 @@ from tqdm import tqdm
 import os
 
 def validate(validset, network, batch_size, criterion, score_type, is_cuda):
+
+
+    #print(score_type)
 
     collate_fn = partial(partial_collate_fn,is_cuda=is_cuda)
 
@@ -212,11 +197,11 @@ def validate(validset, network, batch_size, criterion, score_type, is_cuda):
 
         y_pred = output.max(dim=1)[1]
 
-        if score_type is 'ua':
+        if score_type == 'ua':
 
             average_type = 'macro'
 
-        elif score_type is 'wa':
+        elif score_type == 'wa':
 
             average_type = 'weighted'
 
@@ -224,6 +209,8 @@ def validate(validset, network, batch_size, criterion, score_type, is_cuda):
 
             average_type = 'error'
             print('error in score_type')
+
+        #print(average_type)
 
         score += recall_score(
                 y_pred.data.cpu().numpy(),
@@ -259,11 +246,11 @@ def test(testset, network, batch_size, criterion, score_type, is_cuda):
 
         y_pred = output.max(dim=1)[1]
 
-        if score_type is 'ua':
+        if score_type == 'ua':
 
             average_type = 'macro'
 
-        elif score_type is 'wa':
+        elif score_type == 'wa':
 
             average_type = 'weighted'
 
@@ -283,9 +270,11 @@ def test(testset, network, batch_size, criterion, score_type, is_cuda):
 
 class Trainer():
 
-    def __init__(self, expname, traindataloader, validset, batch_size, network, st_epoch, ed_epoch, optimizer, criterion, score_type, is_cuda):
+    def __init__(self, mdlpath, logpath, traindataloader, validset, batch_size, network, st_epoch, ed_epoch, optimizer, criterion, score_type, is_cuda):
 
-        self.expname = expname
+        self.mdlpath = mdlpath
+
+        self.logpath = logpath
 
         self.traindataloader = traindataloader
 
@@ -352,17 +341,19 @@ class Trainer():
 
                 self.optimizer.step()
 
+
+            
+            #print(self.score_type)
+
             valid_loss, valid_score = validate(
                     self.validset, self.network, self.batch_size,
                     self.criterion, self.score_type, self.is_cuda)
 
             train_log = '[%d, %5d] loss: %.3f'%(epoch, i, train_loss.data[0])
             valid_log = '[%d, %5d] valid_score: %s'%(epoch, i, str(valid_score))
-            os.system('echo %s >> %s.log'%(train_log, self.expname))
-            os.system('echo %s >> %s.log'%(valid_log, self.expname))
+            os.system('echo %s >> %s'%(train_log, self.logpath))
+            os.system('echo %s >> %s'%(valid_log, self.logpath))
             print(train_log)
-
-            filename = self.expname + '.pth'
 
             if valid_score > best_valid_score:
 
@@ -375,72 +366,92 @@ class Trainer():
 
                 valid_log = '[%d, %5d] best valid_score: %s'%(epoch, i, str(best_valid_score))
 
-                os.system('echo best: %s >> %s.log'%(valid_log, self.expname))
+                os.system('echo best: %s >> %s'%(valid_log, self.logpath))
                 print(valid_score)
 
-        torch.save(state, filename)
-        print('save model',filename)
+
+        torch.save(state, self.mdlpath)
+        print('save mdl',self.logpath)
         print('Finished Training')              
+
 
 from functools import partial
 import random
 import sys
 import pandas as pd
+import pickle as pk
 
-expname = sys.argv[1]
+def run_exp_case(exp_case):
 
-i_fold = int(sys.argv[2])
-print("i_fold:",i_fold)
+    is_cuda = True
 
-batch_size = 100
+    exp_case = json.loads(exp_case)
 
-score_type = 'wa'
+    # get parameters
+    mdlpath = exp_case['mdlpath']
+    logpath = exp_case['logpath']
+    bal_wgts_pk = exp_case['balanced_weights_pk']
+    dataset_pk = exp_case['dataset_pk']
+    score_type = exp_case['score_type']
+    bsz = exp_case['batch_size']
+    n_epochs = exp_case['n_epochs']
+    lr = exp_case['lr']
+    n_labels = exp_case['n_labels']
 
-dataset_path = 'iemocap_5sessions_for_cv_frac_0.1.df.pk'
+    #print(bal_wgts_pk)
+    #print(catwgt)
+    #print(pickle.load(open(bal_wgts_pk,'rb')))
+    catwgt = torch.Tensor(pickle.load(open(bal_wgts_pk,'rb')))
+    datasets = pk.load(open(dataset_pk,'rb'))
 
-epoch_st = 0
+    lldtrainset = EmoLLDDataset(datasets['train'], catwgt, is_cuda)
+    lldvalidset = EmoLLDDataset(datasets['valid'], catwgt, is_cuda)
 
-epoch_ed = 300
 
-is_cuda = True
 
-df = pd.read_hdf('iemocap_4emo.h5','table')
 
-catweight = torch.Tensor(pickle.load(open('iemocap_balanced_weights.pk','rb')))
+    collate_fn = partial(partial_collate_fn,is_cuda=is_cuda)
 
-#catweight = torch.Tensor([
-#                len(df)/len(df.loc[df.loc[:,'cat']=='N']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='S']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='A']),
-#                len(df)/len(df.loc[df.loc[:,'cat']=='H'])])
-print(catweight)
+    trainloader = DataLoader(lldtrainset, batch_size=bsz, shuffle=True, collate_fn=collate_fn)
 
-lldtrainset = EmoLLDDataset(dataset_path, i_fold, 'train', catweight, is_cuda)
-lldvalidset = EmoLLDDataset(dataset_path, i_fold, 'valid', catweight, is_cuda)
+    mdl = local_att_rnn(n_labels, is_cuda)
 
-collate_fn = partial(partial_collate_fn,is_cuda=is_cuda)
+    optimizer = torch.optim.Adam(mdl.parameters(), lr=lr)
 
-trainloader = DataLoader(lldtrainset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+    criterion = nn.CrossEntropyLoss(weight=to_cu(is_cuda,Variable(catwgt)))
 
-model = local_att_rnn(is_cuda)
+    trainer = Trainer(
+            mdlpath, logpath, 
+            trainloader, lldvalidset, 
+            bsz, mdl, 0, n_epochs, 
+            optimizer, criterion, score_type, is_cuda)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.00001)
+    trainer.training()
 
-criterion = nn.CrossEntropyLoss(weight=to_cu(is_cuda,Variable(catweight)))
+    print()
+    print('--- --- --- Test --- --- ---')
+    print()
 
-trainer = Trainer(expname+'_'+ str(i_fold), trainloader, lldvalidset, batch_size, model, epoch_st, epoch_ed, optimizer, criterion, score_type, is_cuda)
+    lldtestset = EmoLLDDataset(datasets['test'], catwgt, is_cuda)
 
-trainer.training()
+    best_mdl = local_att_rnn(n_labels, is_cuda)
 
-lldtestset = EmoLLDDataset(dataset_path, i_fold, 'test', catweight, is_cuda)
+    best_mdl.load_state_dict(torch.load(mdlpath)['net_state_dict'])
 
-best_model = local_att_rnn(is_cuda)
+    test_loss, test_score = test(lldtestset, best_mdl, 
+                        bsz, criterion, score_type, is_cuda)
 
-best_model.load_state_dict(torch.load(expname + '_' + str(i_fold)+'.pth')['net_state_dict'])
+    test_log = 'test_score: %s'%(str(test_score))
 
-test_loss, test_score = test(lldtestset, best_model, batch_size, criterion, score_type, is_cuda)
+    os.system('echo %s >> %s'%(test_log, logpath))
 
-test_log = 'test_score: %s'%(str(test_score))
+import json
+import sys
 
-os.system('echo %s >> %s'%(test_log, expname + '_' + str(i_fold) + '.log'))
+exp_cases = open(sys.argv[1]).readlines()
+for exp_case in exp_cases:
+
+    print(exp_case)
+    run_exp_case(exp_case)
+    #break
 

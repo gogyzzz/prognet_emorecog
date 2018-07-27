@@ -1,5 +1,9 @@
-Progressive Neural Network for Speech Emotion Recognition
+Progressive Neural Networks for Transfer Learning in Emotion Recognition
 ===
+
+
+[Progressive Neural Network paper](https://arxiv.org/pdf/1706.03256.pdf)
+
 
 ## Requirements
 
@@ -11,11 +15,13 @@ Progressive Neural Network for Speech Emotion Recognition
 
 - [opensmile 2.3.0](https://www.audeering.com/research/opensmile)
 
+- [fileutils.readHtk](githubrepo)
+
 ## Preparation
 
-### Wav-Categorical_Emotion Pair List File
+### wav_cat.list, utt.list
 
-Wav list file for IEMOCAP DB has 5531 utterances, composed of 4 Emotions.
+IEMOCAP DB has 5531 utterances, composed of 4 Emotions.
 
 A: Anger
 H: Excited + Happiness
@@ -26,73 +32,74 @@ S: Sadness
 #head -2 iemocap/wav_cat.list
 /your/path/Ses01F_impro01_F000.wav N
 /your/path/Ses01F_impro01_F001.wav N
-...
+
+#head -2 iemocap/utt.list
+Ses01F_impro01_F000
+Ses01F_impro01_F001
+
 ```
 
-Wav list file for MSP-IMPROV DB has 7798 utterances, composed of 4 Emotions.
+MSP-IMPROV DB has 7798 utterances, composed of 4 Emotions.
 
 ```bash
-#head -3 msp_improv/wav_cat.list
+#head -2 msp_improv/wav_cat.list
 /your/path/MSP-IMPROV-S01A-F01-P-FM01.wav N 
 /your/path/MSP-IMPROV-S01A-F01-P-FM02.wav H
-/your/path/MSP-IMPROV-S01A-F01-P-MF01.wav H
-...
+
+#head -2 msp_improv/utt.list
+MSP-IMPROV-S01A-F01-P-FM01
+MSP-IMPROV-S01A-F01-P-FM02
 ```
 
 ## How to Run
 
-### IEMOCAP DB
-
 ```bash
-iemocap/make_csv.sh iemocap/wav_cat.list iemocap/
+./add_opensmile_conf.sh your_opensmile_dir/
 
-```
+./prepare_list.sh iemocap/wav_cat.list iemocap/egemaps.htk.list iemocap/utt.list iemocap/egemaps/
 
-```bash
-# head iemocap/db.csv | csvlook ls iemocap 
-wav_cat.list 
-db.csv
-wav_egemaps.htk.list
-egemaps_cat.htk.list
-egemaps/
-```
+./extract_egemaps.sh your_opensmile_dir/ iemocap/utt.list iemocap/egemaps.htk.list
 
-```bash
-cat iemocap/wav_cat.list | parallel --colsep ' ' bash ./extract_egemaps.sh {}
+./make_utt_egemaps_pair.py iemocap/utt.list iemocap/egemaps.htk.list iemocap/utt_egemaps.pk
 
-# read egemaps convert numpy matrix pickle
+./iemocap/make_csv.sh iemocap/utt.list iemocap/wav_cat.list iemocap/ iemocap/full_dataset.csv
 
-convert_egemaps_cat_to_np_matrix.py
+# Modify make_dataset.py parameters as you want!
+#
+### Default setting ###
+#
+# devfrac=0.2
+# session=1
+# prelabel="gender"
+#
+# e.g.
+# sed 's/"gender"/"speaker"/' iemocap/make_dataset.py > new_script.py
+# sed 's/devfrac=0.2/devfrac=0.1/' iemocap/make_dataset.py > new_script.py
 
+./iemocap/make_dataset.py iemocap/full_dataset.csv iemocap/utt_egemaps.pk iemocap/your_dataset_path
 
-iemocap/egemaps.pk
+# Modify make_expcase.py params as you want!
+#
+### Default setting ###
+#
+# learning_rate=
+# batch_size=
+# nepochs
 
-# make 10 cross validation datasets
+./iemocap/make_expcase.py iemocap/tmp iemocap/your_dataset_path/your_expcase
 
-python 
+./main_prognet.py iemocap/your_dataset_path/your_expcase
 
-iemocap/dataset/run/0/fold/0/train/egemaps.pk
-iemocap/dataset/run/0/fold/0/dev/egemaps.pk
-iemocap/dataset/run/0/fold/0/eval/egemaps.pk
-...
-iemocap/dataset/run/9/fold/9/train/egemaps.pk
-iemocap/dataset/run/9/fold/9/dev/egemaps.pk
-iemocap/dataset/run/9/fold/9/eval/egemaps.pk
+ls iemocap/your_dataset_path/your_expcase 
 
-# 
+# log	
+# param.json
+# premodel.pth
+# model.pth
 
-# 
-```
+grep best iemocap/your_dataset_path_your_expcase/log
 
-
-
-cat ./extract_egemaps.sh 
-
-python extract_egemaps.py <dataset.wav.scp_path> <dataset.pk_path> <opensmile_dir_path>
-
-python run_premodel.py <
-
-python run_prognet.py
+# UAR: XX.XX [ XX/XX epoch ]
 
 ```
 
