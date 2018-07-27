@@ -1,9 +1,13 @@
 import sys
+from torch.utils.data import DataLoader
+
+from egemaps_dataset import egemaps_dataset
 
 # arg parsing
 
 expcase = sys.argv[1]
-on_cuda = sys.argv[2]
+#on_cuda = sys.argv[2]
+on_cuda = True
 
 #read %s/param.json
 import json
@@ -12,16 +16,74 @@ with open(expcase +'/param.json') as f:
     param = json.load(f)
 
 #make dataset
-pretrainloader = egemaps_dataloader(param['dataset']+'/pretrain.pk', param['bsz'], on_cuda)
-trainloader = egemaps_dataloader(param['dataset']+'/train.pk', param['bsz'], on_cuda)
-predevloader = egemaps_dataloader(param['dataset']+'/predev.pk', param['bsz'], on_cuda)
-devloader = egemaps_dataloader(param['dataset']+'/dev.pk', param['bsz'], on_cuda)
-evalloader = egemaps_dataloader(param['dataset']+'/eval.pk', param['bsz'], on_cuda)
+pretrainloader = DataLoader(
+        egemaps_dataset(param['dataset']+'/pretrain.pk', on_cuda), 
+        param['bsz'])
 
-dnn_mdl = dnn(param['premodel'], on_cuda)
-prognet_mdl = prognet(param['model'], on_cuda)
+trainloader = DataLoader(
+        egemaps_dataset(param['dataset']+'/train.pk', on_cuda), 
+        param['bsz'])
 
-score_func = measure(param['measure'], on_cuda) # war or uar
-train(dnn_mdl, score_func, param['lr'], param['pre_ephs'], param['log'])
-train(prognet_mdl, score_func, param['lr'], param['ephs'], param['log'])
-test(prognet_mdl, score_func, param['log'])
+predevloader = DataLoader(
+        egemaps_dataset(param['dataset']+'/predev.pk', on_cuda), 
+        param['bsz'])
+
+devloader = DataLoader(
+        egemaps_dataset(param['dataset']+'/dev.pk', on_cuda), 
+        param['bsz'])
+
+evalloader = DataLoader(
+        egemaps_dataset(param['dataset']+'/eval.pk', on_cuda), 
+        param['bsz'])
+
+# pretraining
+
+nin = 88
+nhid = 256
+nout = 2
+dnn_mdl = dnn(nin, nhid, nout, on_cuda)
+optim = torch.optim.Adam(dnn_mdl.parameters())
+
+
+if param['measure'] == 'war':
+    score_func = partial(recall_score, average='weighted', 
+            sample_weight=param['sample_weight'])
+
+elif param['measure'] == 'uar':
+    score_func = partial(recall_score, average='macro')
+
+weight = [1.0, 1.0] 
+precrit = nn.CrossEntropyLoss(weight=weight)
+
+valid_func = partial(validate, 
+        devloader=predevloader, crit=precrit, score_func=score_func,
+        logpath=param['log'])
+pretrained = train(pretrainloader, predevloader, dnn_mdl, precrit, 
+        score_func, optim,
+        param['lr'], param['pre_ephs'], param['log'])
+
+torch.save(pretrained, param['premodel'])
+
+
+# training
+
+pretrained = torch.load_state_dict(torch.load(param['premodel']))
+
+nout = 4
+prognet_mdl = prognet(pretrained, nin, nhid, nout, on_cuda)
+optim = torch.optim.Adam(prognet_mdl.parameters(), lr=0.00005)
+
+weight = [1.0, 1.0] 
+crit = nn.CrossEntropyLoss(weight=weight)
+
+valid_func = partial(validate, 
+        devloader=devloader, crit=crit, score_func=score_func,
+        logpath=param['log'])
+trained = train(trainloader, devloader, prognet_mdl, crit, 
+        score_func, optim, 
+        param['lr'], param['ephs'], param['log'])
+
+torch.save(trained, param['model'])
+
+test(testloader, trained, crit, score_func, 
+    param['log'])
