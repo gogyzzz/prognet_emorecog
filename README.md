@@ -104,9 +104,9 @@ ls iemocap/your_dataset_path/your_expcase
 ./run.py --propjs iemocap/your_dataset_path/your_expcase/param.json \
 	> iemocap/your_dataset_path/your_expcase/log
 
-grep bestscore iemocap/your_dataset_path/your_expcase/log
+grep test iemocap/your_dataset_path/your_expcase/log
 
-#[valid] bestscore: 0.60, loss: 1.000
+#[test] score: 0.509, loss: 1.220 
 
 
 ```
