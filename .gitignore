@@ -3,4 +3,5 @@ __pycache__/*
 *.pk
 *.htk
 *.pyc
-
+exp/*
+iemocap/sess*
