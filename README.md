@@ -15,7 +15,9 @@ Progressive Neural Networks for Transfer Learning in Emotion Recognition
 
 - [opensmile 2.3.0](https://www.audeering.com/research/opensmile)
 
-- [fileutils.readHtk](githubrepo. I changed htk.py for python3)
+- [fileutils.readHtk](https://github.com/MaigoAkisame/fileutils)(githubrepo. I changed htk.py for python3)
+
+
 
 
 ## Preparation
