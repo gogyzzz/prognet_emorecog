@@ -1,11 +1,2 @@
-*.pth
-*.log
-tmp*
-*.scores
-*.uars
-*.pk
-*.htk
-*.list
-*.normed
-iemocap_lld/*
-*.pyc
+backup/*
+__pycache__/*
