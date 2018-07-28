@@ -6,3 +6,4 @@ __pycache__/*
 exp/*
 *.list
 iemocap/sess*
+*.hdf5
