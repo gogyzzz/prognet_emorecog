@@ -28,7 +28,7 @@ def validate_loop_lazy(name, __validate, loader):
     return loss, score
 
 
-def train(model, loader, _valid_lazy, valid_loop, crit, optim):
+def train(model, loader, _valid_lazy, valid_loop, crit, optim, ephs):
 
     best_valid_score = 0.0
     best_model = model
@@ -51,8 +51,8 @@ def train(model, loader, _valid_lazy, valid_loop, crit, optim):
 
             __val_lz = _valid_lazy(model=model)
 
-        print('[train] %5dth epoch, loss: %.3f'
-                %(epoch, train_loss.data[0]))
+        print('[train] %4d/%4dth epoch, loss: %.3f'
+                %(epoch, ephs, train_loss.data[0]))
 
         valid_loss, valid_score = valid_loop(__validate=__val_lz)
 

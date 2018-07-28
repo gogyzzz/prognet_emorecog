@@ -36,7 +36,7 @@ dnn_pth = p['premodel']
 prognet_pth    =  p['model']
 
 lr=p['lr']
-preephs=p['pre_ephs']
+pre_ephs=p['pre_ephs']
 ephs=p['ephs']
 bsz=p['bsz']
 
@@ -81,7 +81,7 @@ else:
     _val_lz = valid_lazy[measure](crit=precrit)
     _val_loop_lz = validate_loop_lazy(name='valid', loader=predevloader)
 
-    pretrained = train( dnn_mdl, pretrainloader, _val_lz, _val_loop_lz, precrit, optim )
+    pretrained = train( dnn_mdl, pretrainloader, _val_lz, _val_loop_lz, precrit, optim, pre_ephs )
 
     tc.save(pretrained.state_dict(), dnn_pth)
 
@@ -102,7 +102,7 @@ else:
     _val_lz = valid_lazy[measure](crit=crit)
     _val_loop_lz = validate_loop_lazy(name='valid', loader=devloader)
 
-    trained = train(prog_mdl, trainloader, _val_lz, _val_loop_lz, crit, optim)
+    trained = train(prog_mdl, trainloader, _val_lz, _val_loop_lz, crit, optim, ephs)
 
     tc.save(trained.state_dict(), prognet_pth)
 

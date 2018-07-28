@@ -54,15 +54,19 @@ MSP-IMPROV-S01A-F01-P-FM02
 ## How to Run
 
 ```bash
-./add_opensmile_conf.sh your_opensmile_dir/
+./add_opensmile_conf.sh your_opensmile_dir
 
-./prepare_list.sh iemocap/wav_cat.list iemocap/egemaps.htk.list iemocap/utt.list iemocap/egemaps/
+./prepare_list.sh iemocap/wav_cat.list \
+	iemocap/egemaps.htk.list iemocap/utt.list iemocap/egemaps/
 
-./extract_egemaps.sh your_opensmile_dir/ iemocap/utt.list iemocap/egemaps.htk.list
+./extract_egemaps.sh your_opensmile_dir/ iemocap/utt.list \
+	iemocap/egemaps.htk.list
 
-./make_utt_egemaps_pair.py iemocap/utt.list iemocap/egemaps.htk.list iemocap/utt_egemaps.pk
+./make_utt_egemaps_pair.py iemocap/utt.list iemocap/egemaps.htk.list \
+	iemocap/utt_egemaps.pk
 
-./iemocap/make_csv.sh iemocap/utt.list iemocap/wav_cat.list iemocap/ iemocap/full_dataset.csv
+./iemocap/make_csv.sh iemocap/utt.list iemocap/wav_cat.list iemocap/ \
+	iemocap/full_dataset.csv
 
 # Modify make_dataset.py parameters as you want!
 #
@@ -82,9 +86,9 @@ MSP-IMPROV-S01A-F01-P-FM02
 #
 ### Default setting ###
 #
-# learning_rate=
-# batch_size=
-# nepochs
+# lr=0.00005
+# bsz=64
+# ephs=200
 
 ./iemocap/make_expcase.py iemocap/tmp iemocap/your_dataset_path/your_expcase
 
@@ -97,9 +101,13 @@ ls iemocap/your_dataset_path/your_expcase
 # premodel.pth
 # model.pth
 
-grep best iemocap/your_dataset_path_your_expcase/log
+./run.py --propjs iemocap/your_dataset_path/your_expcase/param.json \
+	> iemocap/your_dataset_path/your_expcase/log
 
-# UAR: XX.XX [ XX/XX epoch ]
+grep bestscore iemocap/your_dataset_path/your_expcase/log
+
+#[valid] bestscore: 0.60, loss: 1.000
+
 
 ```
 
