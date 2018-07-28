@@ -2,7 +2,7 @@ Progressive Neural Networks for Transfer Learning in Emotion Recognition
 ===
 
 
-[Progressive Neural Network paper](https://arxiv.org/pdf/1706.03256.pdf)
+[paper](https://arxiv.org/pdf/1706.03256.pdf)
 
 [IEMOCAP DB paper](https://pdfs.semanticscholar.org/5cf0/d213f3253cd46673d955209f8463db73cc51.pdf)
 
@@ -12,9 +12,7 @@ Progressive Neural Networks for Transfer Learning in Emotion Recognition
 
 - Python 3.6.4
 
-- Pytorch 0.4.0 
-
-- [csvkit](https://csvkit.readthedocs.io)
+- Pytorch 0.4.1
 
 - [opensmile 2.3.0](https://www.audeering.com/research/opensmile)
 
