@@ -12,9 +12,7 @@ Progressive Neural Networks for Transfer Learning in Emotion Recognition
 
 - Python 3.6.4
 
-- Pytorch 0.4.0 
-
-- [csvkit](https://csvkit.readthedocs.io)
+- Pytorch 0.4.1
 
 - [opensmile 2.3.0](https://www.audeering.com/research/opensmile)
 
