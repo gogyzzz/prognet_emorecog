@@ -1,0 +1,1 @@
+{"dataset": "iemocap/tmp2", "lr": 5e-05, "pre_ephs": 200, "ephs": 200, "bsz": 64, "measure": "war", "log": "iemocap/tmp2/exp/log", "premodel": "iemocap/tmp2/exp/premodel.pth", "model": "iemocap/tmp2/exp/model.pth"}
