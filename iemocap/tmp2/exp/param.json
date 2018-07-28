@@ -1,1 +1,13 @@
-{"dataset": "iemocap/tmp2", "lr": 5e-05, "pre_ephs": 200, "ephs": 200, "bsz": 64, "measure": "war", "log": "iemocap/tmp2/exp/log", "premodel": "iemocap/tmp2/exp/premodel.pth", "model": "iemocap/tmp2/exp/model.pth"}
+{
+    "bsz": 64,
+    "dataset": "iemocap/tmp2",
+    "ephs": 200,
+    "log": "iemocap/tmp2/exp/log",
+    "lr": 5e-05,
+    "measure": "war",
+    "model": "iemocap/tmp2/exp/model.pth",
+    "nhid": 256,
+    "nin": 88,
+    "pre_ephs": 200,
+    "premodel": "iemocap/tmp2/exp/premodel.pth"
+}

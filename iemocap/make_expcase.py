@@ -14,6 +14,8 @@ pre_ephs=200 # pre epochs
 ephs=200 # epochs
 bsz=64 # batch size
 measure="war"
+nin=88
+nhid=256
 
 # 
 
@@ -27,10 +29,13 @@ param = { 'dataset':dataset,
             'measure':measure,
             'log':exp+'/log',
             'premodel':exp+'/premodel.pth',
+            'nin':nin,
+            'nhid':nhid,
             'model':exp+'/model.pth' }
 
+
 with open(exp+'/param.json','w') as f:
-    js.dump(param,f)
+    js.dump(param,f, sort_keys=True, indent=4)
     print(js.dumps(param, sort_keys=True, indent=4))
 
 print('')

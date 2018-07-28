@@ -24,30 +24,34 @@ with open(pars.parse_args().propjs) as f:
     #p = js.load(f.read())
     p = js.load(f)
 
-print(p)
+print(js.dumps(p, indent=4))
 
-pretrain_pk = p['pretrain_pk']
-train_pk    = p['train_pk']
-predev_pk   = p['predev_pk']
-dev_pk      = p['dev_pk']
-eval_pk     = p['eval_pk']
+pretrain_pk = p['dataset']+'/pretrain.pk'
+train_pk    = p['dataset']+'/train.pk'
+predev_pk   = p['dataset']+'/predev.pk'
+dev_pk      = p['dataset']+'/dev.pk'
+eval_pk     = p['dataset']+'/eval.pk'
 
-dnn_pth = p['dnn_pth']
-prognet_pth    =  p['prognet_pth']
+dnn_pth = p['premodel']
+prognet_pth    =  p['model']
 
 lr=p['lr']
-preephs=p['preephs']
+preephs=p['pre_ephs']
 ephs=p['ephs']
 bsz=p['bsz']
 
-dnn_cls=p['dnn_cls']
-prognet_cls=p['prognet_cls']
+with open(p['dataset']+'/idx_prelabel.json') as f:
+    dnn_cls = js.load(f)
+    
+with open(p['dataset']+'/idx_label.json') as f:
+    prognet_cls = js.load(f)
 
 nin=p['nin']
 nhid=p['nhid']
 measure=p['measure']
 
-exit()
+dnn_nout = len(dnn_cls)
+prognet_nout = len(prognet_cls)
 
 dnn_cls_wgt = get_class_weight(pretrain_pk,device)
 prognet_cls_wgt = get_class_weight(train_pk,device)
