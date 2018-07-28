@@ -1,0 +1,13 @@
+{
+    "bsz": 64,
+    "dataset": "msp_improv/tmp",
+    "ephs": 200,
+    "log": "msp_improv/tmp/exp/log",
+    "lr": 5e-05,
+    "measure": "war",
+    "model": "msp_improv/tmp/exp/model.pth",
+    "nhid": 256,
+    "nin": 88,
+    "pre_ephs": 200,
+    "premodel": "msp_improv/tmp/exp/premodel.pth"
+}

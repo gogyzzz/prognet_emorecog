@@ -90,7 +90,7 @@ MSP-IMPROV-S01A-F01-P-FM02
 # bsz=64
 # ephs=200
 
-./iemocap/make_expcase.py iemocap/tmp iemocap/your_dataset_path/your_expcase
+./iemocap/make_expcase.py iemocap/your_dataset_path iemocap/your_dataset_path/your_expcase
 
 ./main_prognet.py iemocap/your_dataset_path/your_expcase
 
