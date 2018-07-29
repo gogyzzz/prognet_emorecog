@@ -110,10 +110,32 @@ ls iemocap/your_dataset_path/your_expcase
 
 grep test iemocap/your_dataset_path/your_expcase/log
 
-#[test] score: 0.509, loss: 1.220 
+# exp results ( Gender => Emotion case )
 
+iemocap/sess11/exp/log:[test] score: 0.503, loss: 1.219
+iemocap/sess12/exp/log:[test] score: 0.507, loss: 1.220
+iemocap/sess13/exp/log:[test] score: 0.504, loss: 1.218
+iemocap/sess14/exp/log:[test] score: 0.504, loss: 1.220
+iemocap/sess15/exp/log:[test] score: 0.501, loss: 1.220
+iemocap/sess21/exp/log:[test] score: 0.547, loss: 1.173
+iemocap/sess22/exp/log:[test] score: 0.551, loss: 1.178
+iemocap/sess23/exp/log:[test] score: 0.547, loss: 1.176
+iemocap/sess24/exp/log:[test] score: 0.548, loss: 1.173
+iemocap/sess25/exp/log:[test] score: 0.546, loss: 1.180
+iemocap/sess31/exp/log:[test] score: 0.550, loss: 1.177
+iemocap/sess32/exp/log:[test] score: 0.547, loss: 1.179
+iemocap/sess33/exp/log:[test] score: 0.547, loss: 1.181
+iemocap/sess34/exp/log:[test] score: 0.538, loss: 1.184
+iemocap/sess35/exp/log:[test] score: 0.550, loss: 1.180
+iemocap/sess41/exp/log:[test] score: 0.548, loss: 1.174
+iemocap/sess42/exp/log:[test] score: 0.553, loss: 1.173
+iemocap/sess43/exp/log:[test] score: 0.555, loss: 1.176
+iemocap/sess44/exp/log:[test] score: 0.552, loss: 1.175
+iemocap/sess45/exp/log:[test] score: 0.542, loss: 1.176
+iemocap/sess51/exp/log:[test] score: 0.510, loss: 1.206
+iemocap/sess52/exp/log:[test] score: 0.510, loss: 1.211
+iemocap/sess53/exp/log:[test] score: 0.505, loss: 1.212
+iemocap/sess54/exp/log:[test] score: 0.502, loss: 1.216
+iemocap/sess55/exp/log:[test] score: 0.525, loss: 1.200
 
 ```
-
-
-
