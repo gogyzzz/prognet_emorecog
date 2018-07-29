@@ -2,9 +2,8 @@
 
 wavcat=$1
 egemapshtk=$2
-htkdir=$3
-
-utt=utter.list.tmp
+utt=$3
+htkdir=$4
 
 mkdir -p $htkdir
 
