@@ -4,6 +4,5 @@ __pycache__/*
 *.htk
 *.pyc
 exp/*
-*.list
 iemocap/sess*
 *.hdf5
