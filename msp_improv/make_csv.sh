@@ -20,7 +20,7 @@ cut -c6-8 $utt > $spk
 
 cut -c6 $utt > $gender
 
-cut -c2-3 $utt > $sess
+cut -c7-8 $utt > $sess
 
 # check
 echo "<$emo>"; head -2 $emo

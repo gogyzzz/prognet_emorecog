@@ -63,7 +63,7 @@ MSP-IMPROV-S01A-F01-P-FM02
 ./prepare_list.sh iemocap/wav_cat.list \
 	iemocap/egemaps.htk.list iemocap/utt.list iemocap/egemaps/
 
-./extract_egemaps.sh your_opensmile_dir/ iemocap/utt.list \
+./extract_egemaps.sh your_opensmile_dir/ iemocap/wav_cat.list \
 	iemocap/egemaps.htk.list
 
 ./make_utt_egemaps_pair.py iemocap/utt.list iemocap/egemaps.htk.list \
@@ -95,8 +95,6 @@ MSP-IMPROV-S01A-F01-P-FM02
 # ephs=200
 
 ./iemocap/make_expcase.py iemocap/your_dataset_path iemocap/your_dataset_path/your_expcase
-
-./main_prognet.py iemocap/your_dataset_path/your_expcase
 
 ls iemocap/your_dataset_path/your_expcase 
 
@@ -138,4 +136,34 @@ iemocap/sess53/exp/log:[test] score: 0.505, loss: 1.212
 iemocap/sess54/exp/log:[test] score: 0.502, loss: 1.216
 iemocap/sess55/exp/log:[test] score: 0.525, loss: 1.200
 
+msp_improv/sess11/exp/log:[test] score: 0.446, loss: 1.267
+msp_improv/sess12/exp/log:[test] score: 0.464, loss: 1.263
+msp_improv/sess13/exp/log:[test] score: 0.451, loss: 1.264
+msp_improv/sess14/exp/log:[test] score: 0.464, loss: 1.254
+msp_improv/sess15/exp/log:[test] score: 0.453, loss: 1.265
+msp_improv/sess21/exp/log:[test] score: 0.437, loss: 1.279
+msp_improv/sess22/exp/log:[test] score: 0.435, loss: 1.276
+msp_improv/sess23/exp/log:[test] score: 0.432, loss: 1.284
+msp_improv/sess24/exp/log:[test] score: 0.444, loss: 1.269
+msp_improv/sess25/exp/log:[test] score: 0.443, loss: 1.282
+msp_improv/sess31/exp/log:[test] score: 0.461, loss: 1.262
+msp_improv/sess32/exp/log:[test] score: 0.454, loss: 1.267
+msp_improv/sess33/exp/log:[test] score: 0.458, loss: 1.266
+msp_improv/sess34/exp/log:[test] score: 0.454, loss: 1.265
+msp_improv/sess35/exp/log:[test] score: 0.453, loss: 1.273
+msp_improv/sess41/exp/log:[test] score: 0.470, loss: 1.252
+msp_improv/sess42/exp/log:[test] score: 0.458, loss: 1.258
+msp_improv/sess43/exp/log:[test] score: 0.453, loss: 1.260
+msp_improv/sess44/exp/log:[test] score: 0.464, loss: 1.258
+msp_improv/sess45/exp/log:[test] score: 0.471, loss: 1.253
+msp_improv/sess51/exp/log:[test] score: 0.541, loss: 1.193
+msp_improv/sess52/exp/log:[test] score: 0.516, loss: 1.212
+msp_improv/sess53/exp/log:[test] score: 0.529, loss: 1.201
+msp_improv/sess54/exp/log:[test] score: 0.531, loss: 1.197
+msp_improv/sess55/exp/log:[test] score: 0.516, loss: 1.211
+msp_improv/sess61/exp/log:[test] score: 0.440, loss: 1.284
+msp_improv/sess62/exp/log:[test] score: 0.471, loss: 1.263
+msp_improv/sess63/exp/log:[test] score: 0.466, loss: 1.259
+msp_improv/sess64/exp/log:[test] score: 0.456, loss: 1.274
+msp_improv/sess65/exp/log:[test] score: 0.444, loss: 1.276
 ```
