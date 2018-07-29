@@ -1,4 +1,4 @@
-Progressive Neural Networks for Transfer Learning in Emotion Recognition
+A Pytorch implementation of 'Progressive Neural Networks for Transfer Learning in Emotion Recognition' 
 ===
 
 
