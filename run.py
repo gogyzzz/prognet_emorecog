@@ -58,6 +58,11 @@ prognet_cls_wgt = get_class_weight(train_pk,device)
 
 valid_lazy = {'uar': validate_uar_lazy,
                 'war': validate_war_lazy }
+precrit = {'uar': nn.CrossEntropyLoss(),
+                'war': nn.CrossEntropyLoss(weight=dnn_cls_wgt)}
+crit = {'uar': nn.CrossEntropyLoss(),
+                'war': nn.CrossEntropyLoss(weight=prognet_cls_wgt)}
+
 
 # loading
 pretrainloader = DataLoader(egemaps_dataset(pretrain_pk, dnn_cls_wgt,device), bsz)
@@ -76,9 +81,7 @@ else:
 
     optim = tc.optim.Adam(dnn_mdl.parameters())
 
-    precrit = nn.CrossEntropyLoss(weight=dnn_cls_wgt)
-
-    _val_lz = valid_lazy[measure](crit=precrit)
+    _val_lz = valid_lazy[measure](crit=precrit[measure])
     _val_loop_lz = validate_loop_lazy(name='valid', loader=predevloader)
 
     pretrained = train( dnn_mdl, pretrainloader, _val_lz, _val_loop_lz, precrit, optim, pre_ephs )
@@ -90,7 +93,6 @@ dnn_mdl.load_state_dict(tc.load(dnn_pth))
 
 prog_mdl = prognet(dnn_mdl, nin, nhid, prognet_nout)
 prog_mdl.to(device)
-crit = nn.CrossEntropyLoss(weight=prognet_cls_wgt)
 
 if os.path.exists(prognet_pth):
     print(prognet_pth, 'already exists')
@@ -99,7 +101,7 @@ else:
 
     optim = tc.optim.Adam(prog_mdl.parameters(), lr=0.00005)
 
-    _val_lz = valid_lazy[measure](crit=crit)
+    _val_lz = valid_lazy[measure](crit=crit[measure])
     _val_loop_lz = validate_loop_lazy(name='valid', loader=devloader)
 
     trained = train(prog_mdl, trainloader, _val_lz, _val_loop_lz, crit, optim, ephs)
@@ -109,6 +111,6 @@ else:
 prog_mdl.load_state_dict(tc.load(prognet_pth))
 _val_lz = valid_lazy[measure](model=prog_mdl, crit=crit)
 
-# test
+# testing
 validate_loop_lazy('test', _val_lz, evalloader) 
 
