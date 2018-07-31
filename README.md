@@ -109,6 +109,8 @@ ls iemocap/your_dataset_path/your_expcase
 grep test iemocap/your_dataset_path/your_expcase/log
 
 # exp results ( Gender => Emotion case )
+# The dataset configuration is different from the original one.
+# These experimental results were obtained in a speaker independent environment.
 
 iemocap/sess11/exp/log:[test] score: 0.503, loss: 1.219
 iemocap/sess12/exp/log:[test] score: 0.507, loss: 1.220
